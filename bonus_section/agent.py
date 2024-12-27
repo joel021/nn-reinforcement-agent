@@ -1,11 +1,19 @@
-'''
-    Updated state representation implemented in 10. Bonus: Optimize State Representation
-'''
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import numpy as np
 
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.optimizers import Adam
-import numpy as np   
+class DQNModel(nn.Module):
+    def __init__(self):
+        super(DQNModel, self).__init__()
+        self.fc1 = nn.Linear(2, 64)
+        self.fc2 = nn.Linear(64, 32)
+        self.out = nn.Linear(32, 4)
+
+    def forward(self, x):
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        return self.out(x)
 
 class Agent:
     def __init__(self, epsilon=1, epsilon_decay=0.998, epsilon_end=0.01, gamma=0.99):
@@ -13,80 +21,48 @@ class Agent:
         self.epsilon_decay = epsilon_decay
         self.epsilon_end = epsilon_end
         self.gamma = gamma
-        self.model = self.build_model()
-
-    def build_model(self):
-        # Create a sequential model with 3 layers
-        model = Sequential([
-            # Input layer expects a flattened grid, hence the input shape is grid_size squared
-            Dense(64, activation='relu', input_shape=(2,)),
-            Dense(32, activation='relu'),
-            # Output layer with 4 units for the possible actions (up, down, left, right)
-            Dense(4, activation='linear')
-        ])
-
-         # Update learning rate
-        optimizer = Adam(learning_rate=0.00001)
-
-        # Compile the model with the custom optimizer
-        model.compile(optimizer=optimizer, loss='mse')
-
-        return model 
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model = DQNModel().to(self.device)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=0.00001)
+        self.criterion = nn.MSELoss()
 
     def get_action(self, state):
-        # rand() returns a random value between 0 and 1
         if np.random.rand() <= self.epsilon:
-            # Exploration: random action
             action = np.random.randint(0, 4)
         else:
-            # Add an extra dimension to the state to create a batch with one instance
-            state = np.expand_dims(state, axis=0)
+            state = torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(self.device)
+            q_values = self.model(state).detach().cpu().numpy()
+            action = np.argmax(q_values[0])
 
-            # Use the model to predict the Q-values (action values) for the given state
-            q_values = self.model.predict(state, verbose=0)
-
-            # Select and return the action with the highest Q-value
-            action = np.argmax(q_values[0]) # Take the action from the first (and only) entry
-        
-        # Decay the epsilon value to reduce the exploration over time
         if self.epsilon > self.epsilon_end:
             self.epsilon *= self.epsilon_decay
 
         return action
-    
 
     def learn(self, experiences):
-        states = np.array([experience.state for experience in experiences])
-        actions = np.array([experience.action for experience in experiences])
-        rewards = np.array([experience.reward for experience in experiences])
-        next_states = np.array([experience.next_state for experience in experiences])
-        dones = np.array([experience.done for experience in experiences])
+        states = torch.tensor([exp.state for exp in experiences], dtype=torch.float32).to(self.device)
+        actions = torch.tensor([exp.action for exp in experiences], dtype=torch.long).to(self.device)
+        rewards = torch.tensor([exp.reward for exp in experiences], dtype=torch.float32).to(self.device)
+        next_states = torch.tensor([exp.next_state for exp in experiences], dtype=torch.float32).to(self.device)
+        dones = torch.tensor([exp.done for exp in experiences], dtype=torch.float32).to(self.device)
 
-        # Predict the Q-values (action values) for the given state batch
-        current_q_values = self.model.predict(states, verbose=0)
+        current_q_values = self.model(states)
+        next_q_values = self.model(next_states).detach()
 
-        # Predict the Q-values for the next_state batch
-        next_q_values = self.model.predict(next_states, verbose=0)
-
-                # Initialize the target Q-values as the current Q-values
-        target_q_values = current_q_values.copy()
-
-        # Loop through each experience in the batch
+        target_q_values = current_q_values.clone()
         for i in range(len(experiences)):
             if dones[i]:
-                # If the episode is done, there is no next Q-value
-                # [i, actions[i]] is the numpy equivalent of [i][actions[i]]
                 target_q_values[i, actions[i]] = rewards[i]
             else:
-                # The updated Q-value is the reward plus the discounted max Q-value for the next state
-                # [i, actions[i]] is the numpy equivalent of [i][actions[i]]
-                target_q_values[i, actions[i]] = rewards[i] + self.gamma * np.max(next_q_values[i])
-            
-        # Train the model
-        self.model.fit(states, target_q_values, epochs=1, verbose=0)
+                target_q_values[i, actions[i]] = rewards[i] + self.gamma * torch.max(next_q_values[i])
+
+        self.optimizer.zero_grad()
+        loss = self.criterion(current_q_values, target_q_values)
+        loss.backward()
+        self.optimizer.step()
 
     def load(self, file_path):
-        self.model = load_model(file_path)
+        self.model.load_state_dict(torch.load(file_path))
 
     def save(self, file_path):
-        self.model.save(file_path)
+        torch.save(self.model.state_dict(), file_path)
