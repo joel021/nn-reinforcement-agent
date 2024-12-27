@@ -10,7 +10,6 @@ if __name__ == '__main__':
     environment = Environment(grid_size=grid_size, render_on=True)
     agent = Agent(grid_size=grid_size, epsilon=1, epsilon_decay=0.9998, epsilon_end=0.01)
     experience_replay = ExperienceReplay(capacity=10000, batch_size=32)
-    # agent.load(f'models/model_{grid_size}.h5')
     
     # Number of episodes to run before training stops
     episodes = 5000
@@ -48,4 +47,4 @@ if __name__ == '__main__':
             # Optionally, pause for half a second to evaluate the model
             # time.sleep(0.5)
     
-        agent.save(f'models/model_{grid_size}.h5')
+        agent.save(f'models/model_{grid_size}.pth')

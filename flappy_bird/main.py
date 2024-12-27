@@ -16,7 +16,7 @@ env = Environment(screen=screen, render_on=True, obstacle_generator=obstacle_gen
 agent = Agent(epsilon=0.001, epsilon_decay=0.995, epsilon_end=0.001)
 experience_replay = ExperienceReplay(capacity=10000, batch_size=32)
 
-agent.load('models/model.h5')
+agent.load('models/model.pth')
 
 episodes = 5000
 
@@ -51,7 +51,7 @@ for episode in range(episodes):
         # Set the state to the next_state
         state = next_state
     
-    agent.save('models/model.h5')
+    agent.save('models/model.pth')
 
 pygame.quit()
 sys.exit()

@@ -6,9 +6,10 @@ authors = ["Joel Pires <joelpires70@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.10"
 torch = "^2.5.1"
 numpy = "^2.2.1"
+pygame = "^2.6.1"
 
 
 [build-system]

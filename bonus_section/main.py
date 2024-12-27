@@ -13,7 +13,7 @@ if __name__ == '__main__':
 
     environment = Environment(grid_size=grid_size, render_on=True)
     agent = Agent(epsilon=1, epsilon_decay=0.9998, epsilon_end=0.01)
-    agent.load(f'../models/model_bonus.h5')
+    agent.load(f'../models/model_bonus.pth')
     
     experience_replay = ExperienceReplay(capacity=10000, batch_size=32)
     
@@ -53,4 +53,4 @@ if __name__ == '__main__':
             # Optionally, pause for half a second to evaluate the model
             # time.sleep(0.5)
     
-        agent.save(f'../models/model_bonus.h5')
+        agent.save(f'../models/model_bonus.pth')
