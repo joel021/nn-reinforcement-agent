@@ -16,7 +16,7 @@ env = Environment(screen=screen, render_on=True, obstacle_generator=obstacle_gen
 agent = Agent(epsilon=0.001, epsilon_decay=0.995, epsilon_end=0.001)
 experience_replay = ExperienceReplay(capacity=10000, batch_size=32)
 
-agent.load('models/model.pth')
+agent.load_if_exists('models/model.pth')
 
 episodes = 5000
 

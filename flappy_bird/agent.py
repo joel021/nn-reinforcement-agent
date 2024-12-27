@@ -1,3 +1,5 @@
+import os
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -64,6 +66,11 @@ class Agent:
         loss = self.criterion(current_q_values, target_q_values)
         loss.backward()
         self.optimizer.step()
+
+    def load_if_exists(self, file_path):
+
+        if os.path.isfile(file_path):
+            self.load(file_path)
 
     def load(self, file_path):
         self.model.load_state_dict(torch.load(file_path))
