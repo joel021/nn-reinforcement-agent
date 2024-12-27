@@ -1,7 +1,7 @@
 from environment import Environment
 from agent import Agent
 from experience_replay import ExperienceReplay
-import time
+
 
 if __name__ == '__main__':
 
