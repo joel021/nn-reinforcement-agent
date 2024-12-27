@@ -28,10 +28,10 @@ for episode in range(episodes):
     while not done:
         step+=1
         # print()
-        # print('Obstacle Locations:', [obstacle.horizontal_location for obstacle in obstacle_generator.obstacles])
-        # print('Episode:', episode)
-        # print('Step:', step)
-        # print('Epsilon:', agent.epsilon)
+        print('Obstacle Locations:', [obstacle.horizontal_location for obstacle in obstacle_generator.obstacles])
+        print('Episode:', episode)
+        print('Step:', step)
+        print('Epsilon:', agent.epsilon)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -41,12 +41,12 @@ for episode in range(episodes):
 
         reward, next_state, done = env.step(action)
 
-        # experience_replay.add_experience(state, action, reward, next_state, done)
+        experience_replay.add_experience(state, action, reward, next_state, done)
 
         # # If the experience replay has enough memory to provide a sample, train the agent
-        # if experience_replay.can_provide_sample():
-        #     experiences = experience_replay.sample_batch()
-        #     agent.learn(experiences)
+        if experience_replay.can_provide_sample():
+             experiences = experience_replay.sample_batch()
+             agent.learn(experiences)
 
         # Set the state to the next_state
         state = next_state
